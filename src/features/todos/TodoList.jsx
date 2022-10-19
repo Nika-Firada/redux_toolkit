@@ -2,13 +2,21 @@
 import { useState } from "react"
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import FileDownloadDoneIcon from '@mui/icons-material/FileDownloadDone';
+import { useGetTodosQuery, useAddTodoMutation, useDeleteTodoMutation, useUpdateTodoMutation } from "../api/apiSlice";
+import { nanoid } from "@reduxjs/toolkit";
 
 const TodoList = () => {
     const [newTodo, setNewTodo] = useState('')
-
+    const {isError,isLoading,isSuccess,error,data:todos} = useGetTodosQuery()
+    const [addTodo] = useAddTodoMutation();
+    const [updateTodo] = useUpdateTodoMutation();
+    const [deleteTodo] = useDeleteTodoMutation();
+    
+    const userIdN = nanoid()
     const handleSubmit = (e) => {
         e.preventDefault();
         //addTodo
+        addTodo({userId:userIdN,title:newTodo,completed:false})
         setNewTodo('')
     }
 
@@ -32,6 +40,23 @@ const TodoList = () => {
 
     let content;
     // Define conditional content
+    if(isLoading){
+        content = <p>Loading...</p>
+    }else if(isSuccess){
+        content = todos.map(todo =>(
+            <article key={todo.id}>
+                <div className="todo">
+                    <input type="checkbox" id={todo.id} onChange={() => updateTodo({...todo, completed:!todo.completed})} />
+                    <label htmlFor={todo.id}>{todo.title}</label>
+                </div>
+                <button className="trash" onClick={() => deleteTodo({id: todo.id})}>
+                    <DeleteSweepIcon />
+                </button>
+            </article>
+        ))
+    }else if(isError){
+        content = <p>{error}</p>
+    }
 
     return (
         <main>
